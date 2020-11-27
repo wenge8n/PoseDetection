@@ -12,7 +12,7 @@ import CoreVideo
 import MLKit
 
 class ViewController: UIViewController {
-    private var isUsingFrontCamera = true
+    private var isUsingFrontCamera = false
     private var previewLayer: AVCaptureVideoPreviewLayer!
     private lazy var captureSession = AVCaptureSession()
     private lazy var sessionQueue = DispatchQueue(label: Constant.sessionQueueLabel)
@@ -48,6 +48,7 @@ class ViewController: UIViewController {
         poseDetector = PoseDetector.poseDetector(options: options)
         
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.videoGravity = .resizeAspectFill
         setUpPreviewOverlayView()
         setUpAnnotationOverlayView()
         setUpCaptureSessionOutput()
@@ -98,7 +99,7 @@ class ViewController: UIViewController {
         DispatchQueue.main.sync {
           // Pose detected. Currently, only single person detection is supported.
           poses.forEach { pose in
-            for (startLandmarkType, endLandmarkTypesArray) in UIUtilities.poseConnections() {
+            /*for (startLandmarkType, endLandmarkTypesArray) in UIUtilities.poseConnections() {
               let startLandmark = pose.landmark(ofType: startLandmarkType)
               for endLandmarkType in endLandmarkTypesArray {
                 let endLandmark = pose.landmark(ofType: endLandmarkType)
@@ -114,14 +115,14 @@ class ViewController: UIViewController {
                   width: Constant.lineWidth
                 )
               }
-            }
+            }*/
             for landmark in pose.landmarks {
               let landmarkPoint = normalizedPoint(
                 fromVisionPoint: landmark.position, width: width, height: height)
               UIUtilities.addCircle(
                 atPoint: landmarkPoint,
                 to: self.annotationOverlayView,
-                color: UIColor.blue,
+                color: UIColor.red,
                 radius: Constant.smallDotRadius
               )
             }
@@ -197,19 +198,18 @@ class ViewController: UIViewController {
     private func setUpPreviewOverlayView() {
       cameraView.addSubview(previewOverlayView)
       NSLayoutConstraint.activate([
-        previewOverlayView.centerXAnchor.constraint(equalTo: cameraView.centerXAnchor),
-        previewOverlayView.centerYAnchor.constraint(equalTo: cameraView.centerYAnchor),
         previewOverlayView.leadingAnchor.constraint(equalTo: cameraView.leadingAnchor),
+        previewOverlayView.topAnchor.constraint(equalTo: cameraView.topAnchor),
         previewOverlayView.trailingAnchor.constraint(equalTo: cameraView.trailingAnchor),
-
+        previewOverlayView.bottomAnchor.constraint(equalTo: cameraView.bottomAnchor),
       ])
     }
 
     private func setUpAnnotationOverlayView() {
       cameraView.addSubview(annotationOverlayView)
       NSLayoutConstraint.activate([
-        annotationOverlayView.topAnchor.constraint(equalTo: cameraView.topAnchor),
         annotationOverlayView.leadingAnchor.constraint(equalTo: cameraView.leadingAnchor),
+        annotationOverlayView.topAnchor.constraint(equalTo: cameraView.topAnchor),
         annotationOverlayView.trailingAnchor.constraint(equalTo: cameraView.trailingAnchor),
         annotationOverlayView.bottomAnchor.constraint(equalTo: cameraView.bottomAnchor),
       ])
@@ -316,7 +316,7 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
 private enum Constant {
   static let videoDataOutputQueueLabel = "com.google.mlkit.visiondetector.VideoDataOutputQueue"
   static let sessionQueueLabel = "com.google.mlkit.visiondetector.SessionQueue"
-  static let smallDotRadius: CGFloat = 4.0
+  static let smallDotRadius: CGFloat = 8.0
   static let lineWidth: CGFloat = 3.0
   static let originalScale: CGFloat = 1.0
 }
