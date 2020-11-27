@@ -40,6 +40,11 @@ class ViewController: UIViewController {
     @IBOutlet weak var cameraView: UIView!
     @IBOutlet weak var fpsLabel: UILabel!
     
+    /// FPS calculation
+    var lastFrameStartTime: TimeInterval = 0
+    var averageFpsCounter: Int = 0
+    var averageFpsSum: Int = 0
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
@@ -91,6 +96,7 @@ class ViewController: UIViewController {
         DispatchQueue.main.sync {
           self.updatePreviewOverlayView()
           self.removeDetectionAnnotations()
+          self.calcFps()
         }
         guard !poses.isEmpty else {
           print("Pose detector returned no results.")
@@ -255,6 +261,22 @@ class ViewController: UIViewController {
       } else {
         previewOverlayView.image = rotatedImage
       }
+    }
+    
+    private func calcFps() {
+        let currentFrameTime = Date().timeIntervalSince1970
+        let deltaTime = currentFrameTime - lastFrameStartTime
+        let currentFps = 1 / deltaTime
+        
+        averageFpsCounter += 1
+        averageFpsSum += Int(currentFps)
+        if averageFpsCounter > 15 {
+            let averageFps = averageFpsSum / averageFpsCounter
+            averageFpsCounter = 0
+            averageFpsSum = 0
+            self.fpsLabel.text = "FPS: \(averageFps)"
+        }
+        lastFrameStartTime = currentFrameTime
     }
 
     private func convertedPoints(
